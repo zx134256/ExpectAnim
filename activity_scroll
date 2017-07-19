@@ -1,0 +1,136 @@
+package com.github.florent37.expectanim.sample;
+
+import android.os.Bundle;
+import android.support.v4.widget.NestedScrollView;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.ActionMode;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+
+import com.github.florent37.expectanim.ExpectAnim;
+
+import butterknife.BindDimen;
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
+import static com.github.florent37.expectanim.core.Expectations.alpha;
+import static com.github.florent37.expectanim.core.Expectations.height;
+import static com.github.florent37.expectanim.core.Expectations.leftOfParent;
+import static com.github.florent37.expectanim.core.Expectations.rightOfParent;
+import static com.github.florent37.expectanim.core.Expectations.sameCenterVerticalAs;
+import static com.github.florent37.expectanim.core.Expectations.scale;
+import static com.github.florent37.expectanim.core.Expectations.toRightOf;
+import static com.github.florent37.expectanim.core.Expectations.topOfParent;
+
+
+public class ScrollActivity extends AppCompatActivity {
+
+    @BindView(R.id.username)
+    View username;
+    @BindView(R.id.avatar)
+    View avatar;
+    @BindView(R.id.follow)
+    View follow;
+
+
+    @BindView(R.id.fram_layoutscroll)
+    FrameLayout fram_layoutscroll;
+
+    @BindView(R.id.scrollview)
+    NestedScrollView scrollView;
+
+    @BindDimen(R.dimen.height)
+    int height;
+
+    private ExpectAnim expectAnimMove;
+    private int heights=0;
+    private int avatarheight=0;
+    private int followHeight=0;
+    private int followWidth=0;
+    private int username_height=0;
+    private int username_width=0;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_scroll);
+        ButterKnife.bind(this);
+
+        this.expectAnimMove = new ExpectAnim()
+                .expect(avatar)
+                .toBe(
+                        topOfParent().withMarginDp(20),
+                        leftOfParent().withMarginDp(20)
+
+                )
+
+                .expect(username)
+                .toBe(
+                        toRightOf(avatar).withMarginDp(16),
+                        sameCenterVerticalAs(avatar),
+
+                        alpha(0.5f)
+                )
+
+                .expect(follow)
+                .toBe(
+                        rightOfParent().withMarginDp(20),
+                        sameCenterVerticalAs(avatar)
+                )
+                .toAnimation();
+
+        int spec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+        heights=fram_layoutscroll.getLayoutParams().height;
+        avatarheight=avatar.getLayoutParams().height;
+
+        follow.measure(spec,spec);
+        followHeight=follow.getMeasuredHeight();
+        followWidth=follow.getMeasuredWidth();
+
+
+
+        username.measure(spec,spec);
+        username_height= username.getMeasuredHeight();
+        username_width = username.getMeasuredWidth();
+        Log.d("zx","username_height="+" "+username_height+ " "+"username_width="+" "+username_width);
+
+        scrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
+            @Override
+            public void onScrollChange(NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
+                final float percent = (scrollY * 1f) / v.getMaxScrollAmount();
+
+
+                if (percent <= 1) {
+
+                    if (fram_layoutscroll.getLayoutParams().height <= heights) {
+
+                        fram_layoutscroll.getLayoutParams().height = (int) ((heights / 2 * (1 - percent)) + heights / 2);
+                        avatar.getLayoutParams().height = (int) ((avatarheight / 2 * (1 - percent)) + avatarheight / 2);
+                        avatar.getLayoutParams().width = (int) ((avatarheight / 2 * (1 - percent)) + avatarheight / 2);
+                        follow.getLayoutParams().height =(int) ((followHeight / 2 * (1 - percent)) + followHeight / 2);
+                        follow.getLayoutParams().width =(int) ((followWidth / 2 * (1 - percent)) + followWidth / 2);
+                        username.getLayoutParams().height=(int) ((username_height / 2 * (1 - percent)) + username_height / 2);
+                        username.getLayoutParams().width=(int) ((username_width / 2 * (1 - percent)) + username_width / 2);
+
+
+                        /*FrameLayout.LayoutParams s=new FrameLayout.LayoutParams(fram_layoutscroll.getLayoutParams().height, FrameLayout.LayoutParams.MATCH_PARENT);
+                        fram_layoutscroll.setLayoutParams(s);*/
+                        //XLog.d("zx", " move: " + "layout height:" + cover_username!!.layoutParams.height + "username textsize" + userName!!.textSize)
+                        if (fram_layoutscroll.getLayoutParams().height> heights / 2) {
+
+                            fram_layoutscroll.requestLayout();
+                        }
+                    }
+
+
+                }
+                expectAnimMove.setPercent(percent);
+            }
+        });
+    }
+
+
+
+}
